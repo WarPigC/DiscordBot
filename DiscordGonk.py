@@ -1,4 +1,3 @@
-#MTAzMzk3OTUxMTg3Mzc0NDkxNg.G6Al1D.BlgN-meH08-pnOlCUdiIkRN34cF1TTrSeOsgbE   - Gonk
 import discord
 from discord.ext import commands
 import random as r
@@ -15,7 +14,6 @@ from moviepy.editor import VideoFileClip
 import asyncio
 from Scraper1 import search
 import Converter
-import urllib.request
 
 description = '''Pretty epic bot.
 There are a number of utility commands being showcased here.'''
@@ -84,7 +82,7 @@ async def song(ctx,link):
         await ctx.channel.send(file=discord.File(fp = f"{name}"))
         os.remove(path=name)
     except:
-        await ctx.reply("Error \n *maybe because of a too large file/video?*")
+        await ctx.reply("Error \n *-maybe because of a too large file/video?*")
                        
 @bot.command(description = "Encodes any Big sentence")
 async def encode(ctx,*,Sentence):
@@ -467,7 +465,7 @@ async def upload(ctx, attachment: discord.Attachment):
     await ctx.send(f'<{attachment.url}>') 
     
     
-@bot.command(description="Converts provided Video (.MP4) to GIF format")
+@bot.command(name = "gif",description="Converts provided Video (.MP4) to GIF format")
 async def convert(ctx,attachment:discord.Attachment):
     name = attachment.filename
     print(name)
@@ -593,5 +591,5 @@ async def meaning(ctx,input):
     except: 
         await ctx.reply("No Meaning Found.")
     
-                
-bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.G6Al1D.BlgN-meH08-pnOlCUdiIkRN34cF1TTrSeOsgbE')
+#ir3Hhsla6EWPD_vvpD_bmSNsr7W1f_bu             CLIENT SECRET                
+bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.GtDGD6.fit5-gX0L8pI-w7r0b9wJJisd95FCflDGdRx_k')
