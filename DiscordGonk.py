@@ -14,6 +14,7 @@ from moviepy.editor import VideoFileClip
 import asyncio
 from Scraper1 import search
 import Converter
+import Execution
 
 description = '''Pretty epic bot.
 There are a number of utility commands being showcased here.'''
@@ -33,8 +34,6 @@ bot = commands.Bot(command_prefix='?', description=description
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Life"))
     await bot.tree.sync()
-
-
 
 @bot.hybrid_command(name="slash")
 async def slash(ctx): 
@@ -65,13 +64,12 @@ async def youtube(ctx,link):
     await ctx.channel.send("Working on it...")
     name = str(r.randint(0,999)) + ".mp4" 
     try:
-        run(f"youtube-dl --output {name} --max-filesize 25m -f mp4 {link}")
+        run(f"youtube-dl --output {name} --max-filesize 25m -f mp4[width<1080] {link}")
         await ctx.channel.send(file=discord.File(fp = f"{name}"))
         os.remove(path=name)
     except:
         await ctx.reply("Error \n *maybe because of a too large file/video?*")
 
-            
 
 @bot.command(name = 'yts',description = "Download Mp3 songs from YT")
 async def song(ctx,link):
@@ -140,7 +138,7 @@ async def flip(ctx):
     embed.set_image(url = thumbnail)
     
     msg = await ctx.send(embed=embed)
-    time.sleep(3)
+    await asyncio.sleep(3)
     await msg.edit(embed=embed2)
     
 @bot.command(description = "Use Magik ball to answer your question")
@@ -516,10 +514,10 @@ async def bet(ctx,user:discord.User):
     embed_start = discord.Embed(title="Rolling Dice...")
     embed_start.set_thumbnail(url=choicer())
     mssg = await ctx.channel.send(embed = embed_start)
-    time.sleep(1)
+    await asyncio.sleep(1)
     
     await mssg.edit(embed=embed_start.set_thumbnail(url=choicer()))
-    time.sleep(1)
+    await asyncio.sleep(1)
     await mssg.edit(embed=embed_start.set_thumbnail(url=choicer()))
 
         
@@ -590,6 +588,19 @@ async def meaning(ctx,input):
             await ctx.reply(embed=embed)
     except: 
         await ctx.reply("No Meaning Found.")
+    
+@bot.command(name = "py",description = 'Code python. \n No Inputs or Exception Cases displayed')
+async def coder(ctx,*,msg):
+    if ctx.author.id == 710758283408834612:
+        bol,result = Execution.exec(msg)      # Command closed for security purposes
+        
+        if bol:
+            await ctx.channel.send(result)
+        else:
+            await ctx.channel.send('error')
+    else:
+        ctx.reply("Permission denied")
+    
     
 #ir3Hhsla6EWPD_vvpD_bmSNsr7W1f_bu             CLIENT SECRET                
 bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.GtDGD6.fit5-gX0L8pI-w7r0b9wJJisd95FCflDGdRx_k')
