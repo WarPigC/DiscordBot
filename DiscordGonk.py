@@ -471,6 +471,8 @@ async def convert(ctx,attachment:discord.Attachment):
     IntName = Converter.convert(name)
     await ctx.channel.send(file = discord.File(fp = fr"C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\{IntName}.gif"))
     os.remove(f"{IntName}.gif")
+    os.remove(f'{name}')
+    print('done')
     
 @bot.command(description = "Bet with users")
 async def bet(ctx,user:discord.User):
