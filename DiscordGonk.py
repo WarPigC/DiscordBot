@@ -7,7 +7,7 @@ from subprocess import check_output
 import os
 from subprocess import run
 from PIL import Image
-from file_editor import *
+from img_editor import *
 from discord.ext import commands
 from MYsql import *
 from moviepy.editor import VideoFileClip
