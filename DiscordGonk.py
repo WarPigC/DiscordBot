@@ -15,6 +15,8 @@ import asyncio
 from Scraper1 import search
 import Converter
 import Execution
+from RedDownloader import RedDownloader
+import chatgpt
 
 description = '''Pretty epic bot.
 There are a number of utility commands being showcased here.'''
@@ -34,6 +36,7 @@ bot = commands.Bot(command_prefix='?', description=description
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Life"))
     await bot.tree.sync()
+    os.chdir(path = r"C:\Users\callm\Desktop\Python Files")
 
 @bot.hybrid_command(name="slash")
 async def slash(ctx): 
@@ -77,7 +80,7 @@ async def song(ctx,link):
     name = str(r.randint(0,999)) + ".m4a"
     try:
         run(f'youtube-dl -x --output {name} --max-filesize 25m -f m4a {link}')
-        await ctx.channel.send(file=discord.File(fp = f"{name}"))
+        await ctx.channel.send(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}"))
         os.remove(path=name)
     except:
         await ctx.reply("Error \n *-maybe because of a too large file/video?*")
@@ -344,10 +347,10 @@ async def tictactoe(ctx,user : discord.User):
     img = Image.open("base.png")
     img1 = img.copy()
     R = str(r.randrange(1,100))
-    file2 = fr'C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\{R}.png'
+    file2 = fr'C:\Users\callm\Desktop\Python Files\{R}.png'
     img1.save(file2)
-    s = {ctx.author:r"C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\cross.png",
-                  user: r"C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\circle.png"}
+    s = {ctx.author:r"C:\Users\callm\Desktop\Python Files\cross.png",
+                  user: r"C:\Users\callm\Desktop\Python Files\circle.png"}
     L1 = []   #ctx.author
     L2 = []   #user
     win = [["a1","a2","a3"],["a1","a3","a2"],["a2","a1","a3"],["a2","a3","a1"],["a3","a1","a2"],["a3","a2","a1"]
@@ -466,10 +469,9 @@ async def upload(ctx, attachment: discord.Attachment):
 @bot.command(name = "gif",description="Converts provided Video (.MP4) to GIF format")
 async def convert(ctx,attachment:discord.Attachment):
     name = attachment.filename
-    print(name)
-    await attachment.save(fp = fr"C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\{name}")    
+    await attachment.save(fp = fr"C:\Users\callm\Desktop\Python Files\{name}")    
     IntName = Converter.convert(name)
-    await ctx.channel.send(file = discord.File(fp = fr"C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\{IntName}.gif"))
+    await ctx.channel.send(file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{IntName}.gif"))
     os.remove(f"{IntName}.gif")
     os.remove(f'{name}')
     print('done')
@@ -591,7 +593,7 @@ async def meaning(ctx,input):
     except: 
         await ctx.reply("No Meaning Found.")
     
-@bot.command(name = "py",description = 'Code python. \n No Inputs or Exception Cases displayed')
+@bot.command(name = "py",description = 'Code python. \n No Inputs or Exception Cases displayed \n SIDE NOTE: you can also print your code using the command `?gpt`')
 async def coder(ctx,*,msg):
     if ctx.author.id == 710758283408834612:
         bol,result = Execution.exec(msg)      # Command closed for security purposes
@@ -602,7 +604,71 @@ async def coder(ctx,*,msg):
             await ctx.channel.send('error')
     else:
         ctx.reply("Permission denied")
-    
+        
+@bot.command(name = "rd",description = "Downloads Reddit media")
+async def download(ctx,url):
+    Name = str(r.randint(0,1000))
+    RedDownloader.Download(url,output = Name,quality=720)
+    await ctx.message.delete()
+    try:
+        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.gif")
+        await ctx.channel.send(file = file)
+        os.remove(f"{Name}.gif")
+    except:
+        print()
+    try:
+        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.mp4")
+        await ctx.channel.send(file = file)
+        os.remove(f"{Name}.mp4")
+    except:
+        print()
+    try:
+        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.mov")
+        await ctx.channel.send(file = file)
+        os.remove(f"{Name}.mov")
+    except:
+        print()
+    try:
+        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.png")
+        await ctx.channel.send(file = file)
+        os.remove(f"{Name}.png")
+    except:
+        print()
+    try:
+        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.jpg")
+        await ctx.channel.send(file = file)
+        os.remove(f"{Name}.jpg")
+    except:
+        print()
+    try:
+        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.m4a")
+        await ctx.channel.send(file = file)
+        os.remove(f"{Name}.m4a")
+    except:
+        print()
+    try:
+        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.jpeg")
+        await ctx.channel.send(file = file)
+        os.remove(f"{Name}.jpeg")
+    except:
+        print()
+    return 
+
+@bot.command(name = "gpt",description = "Talk with Chat GPT 3.5! \n \n ***NOTE:*** It takes ONE time questions only ")
+async def gpt(ctx,*,text):
+    try:
+        ans = chatgpt.GPT(text)
+        embed = discord.Embed(title = "ChatGPT 3.5 Response",description=ans,colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e]))
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg") 
+        
+    except:
+        embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg")
+ 
+    await ctx.reply(embed = embed)
+
+
+
     
 #ir3Hhsla6EWPD_vvpD_bmSNsr7W1f_bu             CLIENT SECRET                
 bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.GtDGD6.fit5-gX0L8pI-w7r0b9wJJisd95FCflDGdRx_k')
