@@ -1,13 +1,12 @@
 import discord
 from discord.ext import commands
 import random as r
-import time
 from pytube import YouTube
 from subprocess import check_output
 import os
 from subprocess import run
 from PIL import Image
-from img_editor import *
+from img_editor import edit
 from discord.ext import commands
 from MYsql import *
 from moviepy.editor import VideoFileClip
@@ -15,11 +14,14 @@ import asyncio
 from Scraper1 import search
 import Converter
 import Execution
+import openai
+from encrypter import func
+from redvid import Downloader
 from RedDownloader import RedDownloader
-import chatgpt
 
 description = '''Pretty epic bot.
-There are a number of utility commands being showcased here.'''
+There are a number of utility commands being showcased here. \n
+Please use ?help <command name> to know more about it.'''
 
 intents = discord.Intents.all()
 intents.members = True
@@ -27,22 +29,22 @@ intents.message_content = True
 
 
 help_command = commands.DefaultHelpCommand(no_category = "Commands"
-                    ,default_argument_description = " ->  INPUT",sorted=True)
+                    ,default_argument_description = " ->  <INPUT>",sorted=True,dm_help=True)
 bot = commands.Bot(command_prefix='?', description=description
                    , intents=intents,help_command=help_command)
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(name="Life"))
+    await bot.change_presence(activity=discord.Game(name="?help"))
     await bot.tree.sync()
     os.chdir(path = r"C:\Users\callm\Desktop\Python Files")
 
 @bot.hybrid_command(name="slash")
-async def slash(ctx): 
+async def slash(ctx):                                    
    await ctx.send("You executed the slash command!")
    
-@bot.command()
+@bot.command(name="KillSwitch")
 async def stop(ctx):
     if ctx.author.id == 710758283408834612:
         await ctx.channel.send('Closing')
@@ -51,7 +53,7 @@ async def stop(ctx):
 
 @bot.command(description="Gonk's Introduction")
 async def intro(ctx):
-    await ctx.send(f"My name is <@{bot.user.id}>")
+    await ctx.send(f"My name is <@{bot.user.id}>")    # type: ignore
     await ctx.send(f"Hi <@{ctx.author.id}>")
     
 @bot.command(description = "Embeds anything")
@@ -60,9 +62,14 @@ async def embed(ctx,Title,description,thumbnail = None):
     embed.set_image(url= thumbnail)
     await ctx.send(embed = embed)
     await ctx.message.delete()
+    
+@bot.command(description="Great command")
+async def EpicCommand(ctx):
+    await ctx.reply("https://media.discordapp.net/attachments/1067614171656622191/1147256605948252292/attachment.png")
 
 
 @bot.command(name = "yt", description = "Downloads YT videos and sends it") 
+@commands.cooldown(1,15,commands.BucketType.user)
 async def youtube(ctx,link):
     await ctx.channel.send("Working on it...")
     name = str(r.randint(0,999)) + ".mp4" 
@@ -72,9 +79,16 @@ async def youtube(ctx,link):
         os.remove(path=name)
     except:
         await ctx.reply("Error \n *maybe because of a too large file/video?*")
+        
+@youtube.error
+async def youtube_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 
 @bot.command(name = 'yts',description = "Download Mp3 songs from YT")
+@commands.cooldown(1,15,commands.BucketType.user)
 async def song(ctx,link):
     await ctx.channel.send("Working on it...")
     name = str(r.randint(0,999)) + ".m4a"
@@ -83,38 +97,31 @@ async def song(ctx,link):
         await ctx.channel.send(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}"))
         os.remove(path=name)
     except:
-        await ctx.reply("Error \n *-maybe because of a too large file/video?*")
+        await ctx.reply("Error \n *-maybe because of a too large video?*")
+
+@song.error
+async def song_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
                        
-@bot.command(description = "Encodes any Big sentence")
+@bot.command(description = "Encodes any Big sentence \n ONLY letters and space")
 async def encode(ctx,*,Sentence):
-    G = ""
-    if len(Sentence) not in [1,2,3,4,5,6]:
-        L = {'a':'z','b':'y','c':'x','d':'w','e':'v',
-                'f':'u','g':'t','h':'s','i':'r','j':'q',
-                'k':'p','l':'o','m':'n','n':'m','o':'l',
-                'p':'k','q':'j','r':'i','s':'h','t':'g',
-                'u':'f','v':'e','w':'d','x':'c','y':'b',
-                'z':'a',' ':' '}
-        for i in Sentence:
-            if i in L:
-                G += L[i]
-        await ctx.send(G)
-    else:
-        await ctx.send("Only few letters given *[ATLEAST 7]*")
+    try:
+        string = func(Sentence,True)
+        await ctx.reply(string)
+    except:
+        embed = discord.Embed(title="Error",description="Please check the written sentence for wrong characters \n *might wanna check ?help encode*",color=0xFFF000) 
+        await ctx.reply(embed=embed)   
         
-@bot.command(description = "Paste any encoded sentence from this bot to decode")
+@bot.command(description = "Paste any encoded sentence from Gonk to decode \n For Errors, please check encoded message.")
 async def decode(ctx,*,Sentence):
-    G = ""
-    L = {'a':'z','b':'y','c':'x','d':'w','e':'v',
-            'f':'u','g':'t','h':'s','i':'r','j':'q',
-            'k':'p','l':'o','m':'n','n':'m','o':'l',
-            'p':'k','q':'j','r':'i','s':'h','t':'g',
-            'u':'f','v':'e','w':'d','x':'c','y':'b',
-            'z':'a',' ':' '}
-    for i in Sentence:
-        if i in L:
-            G += L[i]
-    await ctx.send(G)
+    try:
+        string = func(Sentence,False)
+        await ctx.reply(string)
+    except:
+        embed = discord.Embed(title="Error",description="Please check the written sentence for wrong characters \n *might wanna check ?help decode*",color=0xFFF000) 
+        await ctx.reply(embed=embed) 
 
 @bot.command(description = "Flips a coin")
 async def flip(ctx):
@@ -136,7 +143,7 @@ async def flip(ctx):
         embed2.set_footer(text = f"{ctx.author.name} won ${g} coins!")
         s.add(ctx.guild.name,ctx.author.id,g)
         
-    embed2.set_image(url=c)
+    embed2.set_image(url=c)  # type: ignore
     thumbnail = "https://media.tenor.com/a2fp2WK79dEAAAAi/one-pound.gif"
     embed.set_image(url = thumbnail)
     
@@ -144,7 +151,10 @@ async def flip(ctx):
     await asyncio.sleep(3)
     await msg.edit(embed=embed2)
     
+    s.Discon()
+    
 @bot.command(description = "Use Magik ball to answer your question")
+@commands.cooldown(1,3,commands.BucketType.user)
 async def magikball(ctx):
     
     start = ['Yes','No','I dont know',"I'm ignoring that",'You know the answer',
@@ -173,8 +183,15 @@ async def magikball(ctx):
         z += r.choice(end)
         await ctx.channel.send(z)
 
+@magikball.error
+async def magikball_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
+
 
 @bot.command(description = "Guess the number fom 1 to 20")
+@commands.cooldown(1,15,commands.BucketType.user)
 async def guess(ctx):
     s = sql()
     await ctx.channel.send("First to guess from 1 to 20 WINS!")
@@ -187,13 +204,22 @@ async def guess(ctx):
             await ctx.channel.send(f'{msg.author.mention} guessed the number!')
             s.add(ctx.guild.name,ctx.author.id,500)
             found +=1
+    
+    s.Discon()
+    
+@guess.error
+async def guess_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 @bot.command(description = 'Pong')
 async def ping(ctx):
     await ctx.channel.send(f'Ping is {bot.latency}')
 
 @bot.command(description = "play Rock Paper Scissor with bot or someone else \n No input is for singleplayer")
-async def rps(ctx, user : discord.User=None):
+@commands.cooldown(1,10,commands.BucketType.user)
+async def rps(ctx, user : discord.User=None):   # type: ignore
     s = sql()
     # (ctx.message.author)
     # await ctx.author.send("hi")
@@ -241,7 +267,7 @@ async def rps(ctx, user : discord.User=None):
             while done == 1:
                     h = await ctx.channel.send(f"{user.mention} \n Please submit your wager money \n [enter number]")
                     msg2 = await bot.wait_for('message',check=check2)
-                    if int(msg2.content) <= B and int(msg2.content) >= int(msg1.content):
+                    if int(msg2.content) <= B and int(msg2.content) >= int(msg1.content):  # type: ignore
                         user2_cash = int(msg2.content)
                         await h.delete()
                         done = 2
@@ -268,7 +294,7 @@ async def rps(ctx, user : discord.User=None):
         return reaction.emoji,user
     
     
-    reaction1,user1 = await bot.wait_for('reaction_add', timeout=60.0, check=check)
+    reaction1,user1 = await bot.wait_for('reaction_add', timeout=60.0, check=check)    # type: ignore
     
     if user.id == 710758283408834612:
         await user.send(f'{user1} took {reaction1}')
@@ -276,7 +302,7 @@ async def rps(ctx, user : discord.User=None):
     if user == None:
         reaction2 = r.choice(["🪨","📄","✂️"])
         user2 = bot.user
-        b = f"<@{bot.user.id}>"
+        b = f"<@{bot.user.id}>"         # type: ignore
         c = "https://cdn.discordapp.com/avatars/1033979511873744916/7a2a32db1f88fbf81993a55cea0dcf54.png"
     else:
         msg2 = await user.send(embed = embed1)
@@ -284,7 +310,7 @@ async def rps(ctx, user : discord.User=None):
         await msg2.add_reaction("📄")
         await msg2.add_reaction("✂️")
         
-        reaction2,user2 = await bot.wait_for('reaction_add', timeout=60.0, check=check)
+        reaction2,user2 = await bot.wait_for('reaction_add', timeout=60.0, check=check)    # type: ignore
         b = user2.mention
         c = user2.avatar
     if user != None:
@@ -334,84 +360,87 @@ async def rps(ctx, user : discord.User=None):
             s.add(ctx.guild.name,user.id,user1_cash)
         else:
             await ctx.channel.send(embed = embed4)
+    
+    s.Discon()
+    
+@rps.error
+async def rps_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
             
-@bot.command(description = "play Tic Tac Toe with bot or someone else \n No input is for singleplayer \n Type 'stop' to stop game")
+@bot.command(description = "Play Tic Tac Toe with bot or someone else \n No input is for singleplayer \n Type 'stop' to stop game")
+@commands.cooldown(1,15,commands.BucketType.user)
 async def tictactoe(ctx,user : discord.User):
-    s = sql()
-    count = 0
+    
     def check(g):
-        return g.author == a and g.content in D or g.content == "stop"
-    D = {'a1':(0,0),'a2':(339,0),'a3':(695,0)
-         ,'b1':(0,339),'b2':(339,339),'b3':(695,339)
-         ,'c1':(0,695),'c2':(339,695),'c3':(695,695)}
+        return (g.author == dict[USER]["user"] and g.content in ValidInp and g.content not in TrackerList) or g.content == "stop"
+    def Checkwinlist(list):
+        
+        win = [["a1","a2","a3"],["a1","a3","a2"],["a2","a1","a3"],["a2","a3","a1"],["a3","a1","a2"],["a3","a2","a1"]
+            ,["b1","b2","b3"],["b1","b3","b2"],["b2","b1","b3"],["b2","b3","b1"],["b3","b1","b2"],["b3","b2","b1"]
+            ,["c1","c2","c3"],["c1","c3","c2"],["c2","c1","c3"],["c2","c3","c1"],["c3","c1","c2"],["c3","c2","c1"]
+            ,["a1","b1","c1"],["a1","c1","b1"],["b1","a1","c1"],["b1","c1","a1"],["c1","a1","b1"],["c1","b1","a1"]
+            ,["a2","b2","c2"],["a2","c2","b2"],["b2","a2","c2"],["b2","c2","a2"],["c2","a2","b2"],["c2","b2","a2"],
+            ["a3","b3","c3"],["a3","c3","b3"],["b3","a3","c3"],["b3","c3","a3"],["c3","a3","b3"],["c3","b3","a3"],
+            ["a1","b2","c3"],["a1","c3","b2"],["b2","a1","c3"],["b2","c3","a1"],["c3","a1","b2"],["c3","b2","a1"],
+            ["a3","b2","c1"],["a3","c1","b2"],["b2","a3","c1"],["b2","c1","a3"],["c1","a3","b2"],["c1","b2","a3"]]
+        
+        for a in win:
+            if (a[0] in list and a[1] in list) and a[2] in list:
+                return True
+        
     img = Image.open("base.png")
     img1 = img.copy()
     R = str(r.randrange(1,100))
-    file2 = fr'C:\Users\callm\Desktop\Python Files\{R}.png'
-    img1.save(file2)
-    s = {ctx.author:r"C:\Users\callm\Desktop\Python Files\cross.png",
-                  user: r"C:\Users\callm\Desktop\Python Files\circle.png"}
-    L1 = []   #ctx.author
-    L2 = []   #user
-    win = [["a1","a2","a3"],["a1","a3","a2"],["a2","a1","a3"],["a2","a3","a1"],["a3","a1","a2"],["a3","a2","a1"]
-           ,["b1","b2","b3"],["b1","b3","b2"],["b2","b1","b3"],["b2","b3","b1"],["b3","b1","b2"],["b3","b2","b1"]
-           ,["c1","c2","c3"],["c1","c3","c2"],["c2","c1","c3"],["c2","c3","c1"],["c3","c1","c2"],["c3","c2","c1"]
-           ,["a1","b1","c1"],["a1","c1","b1"],["b1","a1","c1"],["b1","c1","a1"],["c1","a1","b1"],["c1","b1","a1"]
-           ,["a2","b2","c2"],["a2","c2","b2"],["b2","a2","c2"],["b2","c2","a2"],["c2","a2","b2"],["c2","b2","a2"],
-           ["a3","b3","c3"],["a3","c3","b3"],["b3","a3","c3"],["b3","c3","a3"],["c3","a3","b3"],["c3","b3","a3"],
-           ["a1","b2","c3"],["a1","c3","b2"],["b2","a1","c3"],["b2","c3","a1"],["c3","a1","b2"],["c3","b2","a1"],
-           ["a3","b2","c1"],["a3","c1","b2"],["b2","a3","c1"],["b2","c1","a3"],["c1","a3","b2"],["c1","b2","a3"]]
+    img1.save(fr'C:\Users\callm\Desktop\Python Files\{R}.png')
+    
+    turn_count = 0 # max 9
+    TrackerList = []
+    ValidInp = ["a1","a2","a3","b1","b2","b3","c1","c2","c3"]
+    
+    dict = {"user1":{"user":ctx.author,"symbol-image":r"C:\Users\callm\Desktop\Python Files\circle.png","UserTrack":[]},
+            "user2":{"user":user,"symbol-image":r"C:\Users\callm\Desktop\Python Files\cross.png","UserTrack":[]}}
+    
     while True:
-        for a in s:
-            count = 0
-            g = await ctx.channel.send(f"{a.mention}'s turn.",file = discord.File(file2))
-            msg = await bot.wait_for('message',check = check)
-            if msg.content == "stop":
-                await ctx.channel.send("🛑 Stopped game 🛑")
+        for USER in dict:
+            if turn_count >= 9:
+                await ctx.channel.send(f"**Its a tie between {user.mention} and {ctx.author.mention}!!**",file = discord.File(fr'C:\Users\callm\Desktop\Python Files\{R}.png'))
+                os.remove(fr'C:\Users\callm\Desktop\Python Files\{R}.png')
                 return
-            if msg:
-                edit(file2,msg.content,s[a],R)
-                if a == ctx.author:
-                    L1.append(str(msg.content))
-                elif a == user:
-                    L2.append(str(msg.content))
-            for over in L1:
-                count +=1
-                if count == 5:
-                    await ctx.channel.send(f"**Its a tie between {user.mention} and {ctx.author.mention}!!**")
-                    return
-            for c in win:
-                count = 0
-                for b in c:
-                    if b in L1:        
-                        count += 1
-                        if count == 3:
-                            e = discord.Embed(description="They win $500!",colour=0x008000)
-                            s = sql()
-                            s.add(ctx.guild.name,ctx.author.id,500)
-                            await ctx.channel.send(f"{ctx.author.mention} is the winner!",embed = e)
-                            await ctx.channel.send(file = discord.File(file2))
-                            await g.delete()
-                            await msg.delete()
-                            return
-            for c in win:
-                count = 0 
-                for b in c:       
-                    if b in L2:        
-                        count += 1
-                        if count == 3:
-                            e = discord.Embed(description="They win $500!",colour=0x008000)
-                            s = sql()
-                            s.add(ctx.guild.name,user.id,500)
-                            await ctx.channel.send(f"{user.mention} is the winner!",embed = e)
-                            await ctx.channel.send(file = discord.File(file2))
-                            await g.delete()
-                            await msg.delete()
-                            return
-            await g.delete()            
-            await msg.delete()
+            
+            g = await ctx.channel.send(f"{dict[USER]['user'].mention}'s turn.",file = discord.File(fr'C:\Users\callm\Desktop\Python Files\{R}.png'))
+            msg = await bot.wait_for('message',check = check,timeout = 60)
+            
+            if 'stop' == msg.content.lower():
+                await ctx.channel.send("🛑 Stopped game 🛑")
+                os.remove(fr'C:\Users\callm\Desktop\Python Files\{R}.png')
+                return
+            
+            elif msg.content in ValidInp and msg.content not in dict[USER]["UserTrack"]:
+                edit(fr'C:\Users\callm\Desktop\Python Files\{R}.png',msg.content,dict[USER]["symbol-image"],R)
+                dict[USER]["UserTrack"].append(msg.content)
+                TrackerList.append(msg.content)
+                turn_count += 1
+                await g.delete()
+                await msg.delete()
+                
+            
+            if Checkwinlist(dict[USER]["UserTrack"]):
+                await ctx.channel.send(f"{dict[USER]['user'].mention} is the winner!",file = discord.File(fr'C:\Users\callm\Desktop\Python Files\{R}.png'))
+                os.remove(fr"C:\Users\callm\Desktop\Python Files\{R}.png")
+                await g.delete()
+                await msg.delete()
+                return
+            
+@tictactoe.error
+async def tictactoe_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 @bot.command(description = "Registers the server")
+@commands.cooldown(1,60,commands.BucketType.user)
 async def register(ctx):
     s = sql()
     g = s.register(ctx.guild.name)
@@ -423,8 +452,17 @@ async def register(ctx):
          colour = 0x008000 
     embed = discord.Embed(title= a,colour=colour)
     await ctx.channel.send(embed=embed)
+    
+    s.Discon()
+    
+@register.error
+async def register_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 @bot.command(description = "Registers the User")
+@commands.cooldown(1,60,commands.BucketType.user)
 async def uregister(ctx):
     s = sql()
     g = s.register_user(str(ctx.guild.name),int(ctx.author.id),ctx.author.name)
@@ -434,8 +472,17 @@ async def uregister(ctx):
         a,b = "Registered ☑️","Now you can check balance and gain/lose money" 
     embed = discord.Embed(title=a,description=b,colour=0xffff00)   
     await ctx.channel.send(embed=embed)
+    
+    s.Discon()
+
+@uregister.error
+async def uregister_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 @bot.command(description = "Shows your balance")
+@commands.cooldown(1,10,commands.BucketType.user)
 async def balance(ctx):
     s = sql()
     g = s.balance(ctx.guild.name,ctx.author.id)
@@ -443,6 +490,14 @@ async def balance(ctx):
         await ctx.channel.send(f"{ctx.author.mention} or the server is not registered")
     else:
         embed = discord.Embed(title=f"{ctx.author.name}'s Balance",description=f"${g}",colour=0xffff00)
+        await ctx.reply(embed=embed)
+        
+    s.Discon()
+
+@balance.error
+async def balance_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
 
 @bot.command(description= "Shows Leaderboard for Coins in the server")
@@ -460,6 +515,14 @@ async def lb(ctx):
     embed = discord.Embed(title = f"{ctx.guild.name} Leaderboard",description=string,colour=0x00ffff)
     await ctx.reply(embed=embed)
     
+    s.Discon()
+
+@lb.error
+async def lb_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
+    
         
 @bot.command()
 async def upload(ctx, attachment: discord.Attachment):
@@ -467,16 +530,24 @@ async def upload(ctx, attachment: discord.Attachment):
     
     
 @bot.command(name = "gif",description="Converts provided Video (.MP4) to GIF format")
+@commands.cooldown(1,15,commands.BucketType.user)
 async def convert(ctx,attachment:discord.Attachment):
     name = attachment.filename
-    await attachment.save(fp = fr"C:\Users\callm\Desktop\Python Files\{name}")    
+    await attachment.save(fp = fr"C:\Users\callm\Desktop\Python Files\{name}")       # type: ignore
     IntName = Converter.convert(name)
     await ctx.channel.send(file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{IntName}.gif"))
     os.remove(f"{IntName}.gif")
     os.remove(f'{name}')
     print('done')
+
+@convert.error
+async def convert_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
     
 @bot.command(description = "Bet with users")
+@commands.cooldown(1,10,commands.BucketType.user)
 async def bet(ctx,user:discord.User):
     s = sql()
     colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e])
@@ -550,9 +621,18 @@ async def bet(ctx,user:discord.User):
     else:
         embed_finish = discord.Embed(title=f"{ctx.author.name} VS {user.name}",description=f"              **IT'S A TIE!** \n \n ```No one won anything. \n Both rolled {R1} and {R2}```")
         await mssg.edit(embed=embed_finish)  
+        
+    s.Discon()
+    
+@bet.error
+async def bet_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 
 @bot.command(description="Searches given word's meanings")
+@commands.cooldown(1,10,commands.BucketType.user)
 async def meaning(ctx,input):
     try:
         noun,verb,preposition,adverb,article = search(input)
@@ -592,6 +672,12 @@ async def meaning(ctx,input):
             await ctx.reply(embed=embed)
     except: 
         await ctx.reply("No Meaning Found.")
+
+@meaning.error
+async def meaning_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
     
 @bot.command(name = "py",description = 'Code python. \n No Inputs or Exception Cases displayed \n SIDE NOTE: you can also print your code using the command `?gpt`')
 async def coder(ctx,*,msg):
@@ -606,67 +692,80 @@ async def coder(ctx,*,msg):
         ctx.reply("Permission denied")
         
 @bot.command(name = "rd",description = "Downloads Reddit media")
+@commands.cooldown(1,15,commands.BucketType.user)
 async def download(ctx,url):
     Name = str(r.randint(0,1000))
-    RedDownloader.Download(url,output = Name,quality=720)
+    try:
+        R = Downloader(filename = f"{Name}",max_q = True)
+        R.url = url
+        R.download()
+    except:
+        RedDownloader.Download(url,output = Name,quality=720)
     await ctx.message.delete()
-    try:
-        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.gif")
-        await ctx.channel.send(file = file)
-        os.remove(f"{Name}.gif")
-    except:
-        print()
-    try:
-        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.mp4")
-        await ctx.channel.send(file = file)
-        os.remove(f"{Name}.mp4")
-    except:
-        print()
-    try:
-        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.mov")
-        await ctx.channel.send(file = file)
-        os.remove(f"{Name}.mov")
-    except:
-        print()
-    try:
-        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.png")
-        await ctx.channel.send(file = file)
-        os.remove(f"{Name}.png")
-    except:
-        print()
-    try:
-        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.jpg")
-        await ctx.channel.send(file = file)
-        os.remove(f"{Name}.jpg")
-    except:
-        print()
-    try:
-        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.m4a")
-        await ctx.channel.send(file = file)
-        os.remove(f"{Name}.m4a")
-    except:
-        print()
-    try:
-        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.jpeg")
-        await ctx.channel.send(file = file)
-        os.remove(f"{Name}.jpeg")
-    except:
-        print()
-    return 
+    for i in ["mp4","gif","png","jpg","jpeg","m4a","mov"]:
+        try:
+            file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.{i}")
+            await ctx.channel.send(file = file)
+            os.remove(f"{Name}.{i}")
+            return
+        except:
+            continue
+
+@download.error
+async def dnwld_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 @bot.command(name = "gpt",description = "Talk with Chat GPT 3.5! \n \n ***NOTE:*** It takes ONE time questions only ")
+@commands.cooldown(1,10,commands.BucketType.user)
 async def gpt(ctx,*,text):
-    try:
-        ans = chatgpt.GPT(text)
-        embed = discord.Embed(title = "ChatGPT 3.5 Response",description=ans,colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e]))
-        embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg") 
-        
-    except:
-        embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
-        embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg")
- 
-    await ctx.reply(embed = embed)
+    async def gene():
+        def GPT(text):
+            openai.api_key = "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"
 
+            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": text}])
+            for i in chat_completion:
+                if i == "choices":
+                    for j in chat_completion[i]: # type: ignore
+                        return j["message"]["content"]
+        try:
+            ans = GPT(text)
+            embed = discord.Embed(title = "ChatGPT 3.5 Response",description=ans,colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e]))
+            embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg") 
+            
+        except:
+            embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
+            embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg")
+    
+        await ctx.reply(embed = embed)
+    await asyncio.create_task(gene())
+
+@gpt.error
+async def gpt_error(ctx,error):
+    
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
+        
+
+@bot.command(name="imgai",description="Generates image from ChatGPT's Image version, DALL E.")
+@commands.cooldown(1,10,commands.BucketType.user)
+async def img(ctx,*,prompt):
+    async def gen(prompt):
+        openai.api_key = "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"
+        res = openai.Image.create( prompt=prompt, n=1, size="1024x1024")
+        url = res["data"][0]["url"] #type:ignore
+        await ctx.reply(url)
+    
+    await asyncio.create_task(gen(prompt))
+
+@img.error
+async def img_error(ctx,error):
+    
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
 
     
