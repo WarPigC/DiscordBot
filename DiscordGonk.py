@@ -1,20 +1,16 @@
 import discord
 from discord.ext import commands
 import random as r
-from pytube import YouTube
-from subprocess import check_output
 import os
 from subprocess import run
 from PIL import Image
 from img_editor import edit
 from discord.ext import commands
 from MYsql import *
-from moviepy.editor import VideoFileClip
 import asyncio
 from Scraper1 import search
 import Converter
 import Execution
-import openai
 from encrypter import func
 from redvid import Downloader
 from RedDownloader import RedDownloader
@@ -717,57 +713,59 @@ async def dnwld_error(ctx,error):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
 
-@bot.command(name = "gpt",description = "Talk with Chat GPT 3.5! \n \n ***NOTE:*** It takes ONE time questions only ")
-@commands.cooldown(1,10,commands.BucketType.user)
-async def gpt(ctx,*,text):
-    async def gene():
-        def GPT(text):
-            openai.api_key = "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"
+# @bot.command(name = "gpt",description = "Talk with Chat GPT 3.5! \n \n ***Note:*** It takes ONE time questions only ")
 
-            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": text}])
-            for i in chat_completion:
-                if i == "choices":
-                    for j in chat_completion[i]: # type: ignore
-                        return j["message"]["content"]
-        try:
-            ans = GPT(text)
-            embed = discord.Embed(title = "ChatGPT 3.5 Response",description=ans,colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e]))
-            embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg") 
+# @commands.cooldown(1,10,commands.BucketType.user)
+# async def gpt(ctx,*,text):
+#     try:
+#         async def GPT(text):
+#             openai.api_key = "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" 
+
+#             chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": text}])
+#             for i in chat_completion:
+#                 if i == "choices":
+#                     for j in chat_completion[i]: 
+#                         return j["message"]["content"]
             
-        except:
-            embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
-            embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg")
+#         ans = GPT(text)
+#         embed = discord.Embed(title = "ChatGPT 3.5 Response",description=ans,colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e]))
+#         embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg") 
+        
+#     except:
+#         embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
+#         embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg")
     
-        await ctx.reply(embed = embed)
-    await asyncio.create_task(gene())
+#         await ctx.reply(embed = embed)                NOTE : DEPRECIATED
 
-@gpt.error
-async def gpt_error(ctx,error):
+        
+# @gpt.error
+# async def gpt_error(ctx,error):
     
-    if isinstance(error,commands.CommandOnCooldown):
-        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
-        await ctx.reply(embed=embed)
+#     if isinstance(error,commands.CommandOnCooldown):
+#         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+#         await ctx.reply(embed=embed)
+        
         
 
-@bot.command(name="imgai",description="Generates image from ChatGPT's Image version, DALL E.")
-@commands.cooldown(1,10,commands.BucketType.user)
-async def img(ctx,*,prompt):
-    async def gen(prompt):
-        openai.api_key = "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"
-        res = openai.Image.create( prompt=prompt, n=1, size="1024x1024")
-        url = res["data"][0]["url"] #type:ignore
-        await ctx.reply(url)
+# @bot.command(name="imgai",description="Generates image from ChatGPT's Image version, DALL E.")
+# @commands.cooldown(1,10,commands.BucketType.user)
+# async def img(ctx,*,prompt):
+#     async def gen(prompt):
+#         openai.api_key = "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"
+#         res = openai.Image.create( prompt=prompt, n=1, size="1024x1024")
+#         url = res["data"][0]["url"] #type:ignore
+#         await ctx.reply(url)
     
-    await asyncio.create_task(gen(prompt))
+#     await asyncio.create_task(gen(prompt))                    NOTE: DEPRECIATED
 
-@img.error
-async def img_error(ctx,error):
+# @img.error
+# async def img_error(ctx,error):
     
-    if isinstance(error,commands.CommandOnCooldown):
-        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
-        await ctx.reply(embed=embed)
+#     if isinstance(error,commands.CommandOnCooldown):
+#         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+#         await ctx.reply(embed=embed)
 
 
     
 #ir3Hhsla6EWPD_vvpD_bmSNsr7W1f_bu             CLIENT SECRET                
-bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.GtDGD6.fit5-gX0L8pI-w7r0b9wJJisd95FCflDGdRx_k')
+bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.G-alAu.Vf8BcYsUYJ4fTKfKATvgP7IHm42hLikk6j5LIg')
