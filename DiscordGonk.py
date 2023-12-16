@@ -4,8 +4,7 @@ import random as r
 import os
 from subprocess import run
 from PIL import Image
-from img_editor import edit
-from discord.ext import commands
+from img_editor import edit     #file
 from MYsql import *
 import asyncio
 from Scraper1 import search
@@ -67,14 +66,15 @@ async def EpicCommand(ctx):
 @bot.command(name = "yt", description = "Downloads YT videos and sends it") 
 @commands.cooldown(1,15,commands.BucketType.user)
 async def youtube(ctx,link):
-    await ctx.channel.send("Working on it...")
+    msg = ctx.channel.send("Working on it...")
     name = str(r.randint(0,999)) + ".mp4" 
     try:
         run(f"youtube-dl --output {name} --max-filesize 25m -f mp4[width<1080] {link}")
         await ctx.channel.send(file=discord.File(fp = f"{name}"))
         os.remove(path=name)
+        msg.delete()
     except:
-        await ctx.reply("Error \n *maybe because of a too large file/video?*")
+        await ctx.reply("Error! :octagonal_sign:")
         
 @youtube.error
 async def youtube_error(ctx,error):
@@ -86,14 +86,15 @@ async def youtube_error(ctx,error):
 @bot.command(name = 'yts',description = "Download Mp3 songs from YT")
 @commands.cooldown(1,15,commands.BucketType.user)
 async def song(ctx,link):
-    await ctx.channel.send("Working on it...")
+    mg = ctx.channel.send("Working on it...")
     name = str(r.randint(0,999)) + ".m4a"
     try:
         run(f'youtube-dl -x --output {name} --max-filesize 25m -f m4a {link}')
         await ctx.channel.send(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}"))
         os.remove(path=name)
+        mg.delete()
     except:
-        await ctx.reply("Error \n *-maybe because of a too large video?*")
+        await ctx.reply("Error :octagonal_sign:")
 
 @song.error
 async def song_error(ctx,error):
@@ -159,24 +160,13 @@ async def magikball(ctx):
            ' think about your life',' maybe no actually'," i'm cringing af",' i cant care less',' actually ask your friend ',
            ' not my problem',' million dollar question',' you can become gay though',' definetly not lying','','','','','','']
     end = [' 👍',' 😃',' ✔️',' ❓','','','','',]
-    
-    x = ctx.message.content
-    found = 0
-    
-    x = x.lower()
-    x = x.split()
-    for a in x:
-        if a == 'fuck':
-            found += 1
-    g = ctx.message.content     
-    if len(g) <= 15:
+     
+    if len(ctx.message.content) <= 15:
         await ctx.channel.send("Cringe.")
-    elif found != 0:
-        await ctx.channel.send('No lmao.')
+    elif 'fuck' in ctx.message.content.lower():
+        await ctx.channel.send('NO WAY!!!1!!1!!111!111 \nYou dropped an F-BOMB?')
     else:
-        z = r.choice(start)
-        z += r.choice(mid)
-        z += r.choice(end)
+        z = r.choice(start) + r.choice(mid) + r.choice(end)
         await ctx.channel.send(z)
 
 @magikball.error
@@ -192,16 +182,18 @@ async def guess(ctx):
     s = sql()
     await ctx.channel.send("First to guess from 1 to 20 WINS!")
     number = r.randint(1, 20)
-    print(number)
-    found = 0
-    while found == 0:
-        msg = await bot.wait_for('message')
-        if (msg.content) == str(number):
-            await ctx.channel.send(f'{msg.author.mention} guessed the number!')
-            s.add(ctx.guild.name,ctx.author.id,500)
-            found +=1
+    try:
+        while True:
+            msg = await bot.wait_for('message',120.0)
+            if (msg.content) == str(number):
+                await ctx.channel.send(f'{msg.author.mention} guessed the number!')
+                s.add(ctx.guild.name,ctx.author.id,500)
+                s.Discon()
+                return
+    except asyncio.TimeoutError:
+        s.Discon()
+        return
     
-    s.Discon()
     
 @guess.error
 async def guess_error(ctx,error):
@@ -713,57 +705,33 @@ async def dnwld_error(ctx,error):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
 
-# @bot.command(name = "gpt",description = "Talk with Chat GPT 3.5! \n \n ***Note:*** It takes ONE time questions only ")
-
-# @commands.cooldown(1,10,commands.BucketType.user)
-# async def gpt(ctx,*,text):
-#     try:
-#         async def GPT(text):
-#             openai.api_key = "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" 
-
-#             chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": text}])
-#             for i in chat_completion:
-#                 if i == "choices":
-#                     for j in chat_completion[i]: 
-#                         return j["message"]["content"]
-            
-#         ans = GPT(text)
-#         embed = discord.Embed(title = "ChatGPT 3.5 Response",description=ans,colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e]))
-#         embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg") 
+@bot.command(name = "bard",description = "Talk with Google Bard! \nIt is powered by the Gemini Pro engine. \n \n***Note:*** It takes ONE time questions only ")
+@commands.cooldown(1,10,commands.BucketType.user)
+async def bard(ctx,*,text):
+    try:
+        async def responseGenerator(text):
+            import google.generativeai as g
+            g.configure(api_key="AIzaSyARi_3f074_dj1RBxp-IDwhZotCHqk3mx8")
+            chat = g.GenerativeModel('gemini-pro').start_chat().send_message(text)
+            return chat.text
+        ans = await responseGenerator(text)
+        embed = discord.Embed(title = "Gemini-Pro Response",description=ans,colour = r.choice([0xff0000,0xff9000,0xfff500,0x55ff00,0x00fffc,0x0091ff,0xaa00ff,0xff007e]))
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1184880122822672466/gemini-chatgpt-112814653-16x9_0.png") 
+        await ctx.reply(embed=embed)
         
-#     except:
-#         embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
-#         embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1137767972107194418/th-1264273453.jpg")
-    
-#         await ctx.reply(embed = embed)                NOTE : DEPRECIATED
+    except:
+        embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1184880122822672466/gemini-chatgpt-112814653-16x9_0.png")
+        await ctx.reply(embed = embed)             
 
         
-# @gpt.error
-# async def gpt_error(ctx,error):
+@bard.error
+async def bard_error(ctx,error):
     
-#     if isinstance(error,commands.CommandOnCooldown):
-#         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
-#         await ctx.reply(embed=embed)
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
         
-        
-
-# @bot.command(name="imgai",description="Generates image from ChatGPT's Image version, DALL E.")
-# @commands.cooldown(1,10,commands.BucketType.user)
-# async def img(ctx,*,prompt):
-#     async def gen(prompt):
-#         openai.api_key = "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"
-#         res = openai.Image.create( prompt=prompt, n=1, size="1024x1024")
-#         url = res["data"][0]["url"] #type:ignore
-#         await ctx.reply(url)
-    
-#     await asyncio.create_task(gen(prompt))                    NOTE: DEPRECIATED
-
-# @img.error
-# async def img_error(ctx,error):
-    
-#     if isinstance(error,commands.CommandOnCooldown):
-#         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
-#         await ctx.reply(embed=embed)
 
 
     
