@@ -774,61 +774,30 @@ async def add_audio(ctx):
             elif i.content != 0:                                          
                 for l in i.content.split(): 
                     if "https://cdn.discordapp.com/attachments/" in l:
-                        temp = ''
-                        link,ext = '',' '
-                        flag = False    
-                        contentList = list(l)
                         delCounter = 0
-                        tempInd = 0
-                        
-                        hIndex = contentList.index('h')
-                        for counter in range(0,contentList.count('h')):
-                            for ind in range(5):
-                                temp += contentList[ind + hIndex]
-                            if temp == "https":
-                                flag = True                                                   
-                                break
-                            else:
-                                contentList.pop(hIndex)
-                                hIndex = contentList.index('h')
-                                temp = ""
-                        
-                        if flag == True:          
-                            if '&' in contentList:                                                                        
-                                andIndex = contentList[::-1].index('&')
-                                for ind in range(0,len(contentList[hIndex:len(contentList)-andIndex])):
-                                    link += contentList[hIndex + ind]
-                                print(link + '\n')
-                            else:
-                                for aa in ['.mp4','.webm','.m4a','.mov','.mp3','.wav','.ogg']:
-                                    if aa in l:
-                                        tempInd = len(l) - l[::-1].find(aa)
-                                        break
-                                link = l[hIndex:tempInd]
-                                print(link + '\n')
-                            
-                            for aa in ['mp4','webm','m4a','mov','mp3','wav','ogg']:
-                                    if aa in l:
-                                        ext == aa
-                                        print(ext)
-                            if (ext.lower() in 'mp3oggwavm4a') and (len(aud) < 1):
-                                print("hi")
-                                filename = urlDownloader(link,ext)
-                                aud.append(filename[:filename.find('.')])
-                            else:
-                                delCounter += 1
-                            if ext.lower() in 'mp4movwebm' and (len(vid) < 1):
-                                filename = urlDownloader(link,ext)
-                                vid.append(filename[:filename.find('.')])
-                            else:
-                                delCounter += 1
-                            if delCounter == 2:
-                                continue
+                        link = l 
+                        ext = ""
+                        for extT in ['mp4','webm','m4a','mov','mp3','wav','ogg']:
+                                if extT in link:
+                                    ext = extT
+                        if (ext.lower() in 'mp3oggwavm4a') and (len(aud) < 1):
+                            filename = urlDownloader(link,ext)
+                            aud.append(filename.split('.')[0])
+                        else:
+                            delCounter += 1
+                        if ext.lower() in 'mp4movwebm' and (len(vid) < 1):
+                            filename = urlDownloader(link,ext)
+                            vid.append(filename.split('.')[0])
+                        else:
+                            delCounter += 1
+                        if delCounter == 2:
+                            continue
                     else:
                         pass
     
     if len(vid) == 0 and len(aud) == 0:
         await ctx.reply(":octagonal_sign: File error :octagonal_sign:")
+        
     else:
         output = r.randint(0,9999)
         run(f'ffmpeg -i {vid[0]}.mp4 -i {aud[0]}.mp3 -map 0:v -map 1:a -c:v copy {output}.mp4')
@@ -837,12 +806,12 @@ async def add_audio(ctx):
         await ctx.reply(file = discord.File(fp=f'{output}.mp4'))
         os.remove(f'{output}.mp4')
         
+        
 @add_audio.error
-async def audioadd_error(ctx,error):                                         
+async def addaudio_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
-        await ctx.reply(embed=embed)          
-          
+        await ctx.reply(embed=embed) 
                 
 @bot.command(name="rev",description = "Reverses media files.")
 @commands.cooldown(1,10,commands.BucketType.user)
@@ -870,46 +839,33 @@ async def reverse_media(ctx):
         elif i.content != 0:
             for l in i.content.split(): 
                     if "https://cdn.discordapp.com/attachments/" in l:
-                        temp = ''
-                        link,ext = '',' '
-                        flag = False    
-                        contentList = list(l)
-                        hIndex = contentList.index('h')
-                        for counter in range(0,contentList.count('h')):
-                            for ind in range(5):
-                                temp += contentList[ind + hIndex]
-                            if temp == "https":
-                                flag = True                                                   
-                                break
-                            else:
-                                contentList.pop(hIndex)
-                                hIndex = contentList.index('h')
-                                temp = ""
-                        if flag == True:                                                                                         
-                            andIndex = contentList[::-1].index('&')
-                            for ind in range(0,len(contentList[hIndex:len(contentList)-andIndex])):
-                                link += contentList[hIndex + ind]
-                            indx = link.find("?ex=")
-                            for kji in range(1,5):
-                                if link[indx-kji] == ".": break
-                                ext += link[indx-kji]
-                            ext = ext[::-1].strip()
+                            link = l 
+                            ext = ""
+                            for extT in ['mp4','webm','m4a','mov','mp3','wav','ogg']:
+                                 if extT in link:
+                                     ext = extT
                             filename = urlDownloader(link,ext)
-                            
                             if ext.lower() in 'mp3oggwavm4a':
-                                filename = urlDownloader(link,ext)
-                                run(f"ffmpeg -i {filename} -af areverse {filename[:4]}.mp3")
+                                run(f"ffmpeg -i {filename} -af areverse {filename}2.mp3")
                                 os.remove(f"{filename}")
-                                os.remove(f"{filename[:4]}.mp3")
-                            elif ext.lower() in 'mp4movwebm':
-                                filename = urlDownloader(link,ext)
-                                run(f"ffmpeg -i {filename} -vf reverse -af areverse {filename[:4]}.mp4")
+                                await ctx.reply(file = discord.File(fp=f'{filename}2.mp3'))
+                                os.remove(f"{filename}2.mp3")
+                            elif ext.lower() in 'mp4movwebm': 
+                                run(f"ffmpeg -i {filename} -vf reverse -af areverse {filename}2.mp4")
                                 os.remove(f"{filename}")
-                                os.remove(f"{filename[:4]}.mp4")          
-                            await ctx.reply(file = discord.File(fp=f'{filename[:4]}.mp4'))
+                                await ctx.reply(file = discord.File(fp=f'{filename}2.mp4'))
+                                os.remove(f"{filename}2.mp4")          
                             return
         
-    
+@reverse_media.error
+async def reverse_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
+
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)     
     
 
 #ir3Hhsla6EWPD_vvpD_bmSNsr7W1f_bu             CLIENT SECRET                
