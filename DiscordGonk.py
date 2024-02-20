@@ -4,15 +4,15 @@ import random as r
 import os
 from subprocess import run
 from PIL import Image
-from img_editor import edit     #file
+from img_editor import edit     
 from MYsql import *
 import asyncio
 from Scraper1 import search
 import Converter
-import Execution
 from encrypter import func
-from redvid import Downloader
-from RedDownloader import RedDownloader
+from ImgResizer import downloaderAndResizer
+from gifResizer import gifDownloaderAndResizer
+from CommonMediaDownloader import downloadMedia,urlDownloader
 
 description = '''Pretty epic bot.
 There are a number of utility commands being showcased here. \n
@@ -63,36 +63,13 @@ async def EpicCommand(ctx):
     await ctx.reply("https://media.discordapp.net/attachments/1067614171656622191/1147256605948252292/attachment.png")
 
 
-@bot.command(name = "yt", description = "Downloads YT videos and sends it") 
+@bot.command(name = 'yts',description = "Download songs from YT!")
 @commands.cooldown(1,15,commands.BucketType.user)
-async def youtube(ctx,link):
-    msg = ctx.channel.send("Working on it...")
-    name = str(r.randint(0,999)) + ".mp4" 
+async def song(ctx,link):                                                                
     try:
-        run(f"youtube-dl --output {name} --max-filesize 25m -f mp4[width<1080] {link}")
-        await ctx.channel.send(file=discord.File(fp = f"{name}"))
-        os.remove(path=name)
-        msg.delete()
-    except:
-        await ctx.reply("Error! :octagonal_sign:")
-        
-@youtube.error
-async def youtube_error(ctx,error):
-    if isinstance(error,commands.CommandOnCooldown):
-        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
-        await ctx.reply(embed=embed)
-
-
-@bot.command(name = 'yts',description = "Download Mp3 songs from YT")
-@commands.cooldown(1,15,commands.BucketType.user)
-async def song(ctx,link):
-    mg = ctx.channel.send("Working on it...")
-    name = str(r.randint(0,999)) + ".m4a"
-    try:
-        run(f'youtube-dl -x --output {name} --max-filesize 25m -f m4a {link}')
-        await ctx.channel.send(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}"))
-        os.remove(path=name)
-        mg.delete()
+        name = downloadMedia(link,"ytSong")
+        await ctx.reply(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}.m4a"))
+        os.remove(path=f'{name}.m4a')
     except:
         await ctx.reply("Error :octagonal_sign:")
 
@@ -510,24 +487,30 @@ async def lb_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
-    
-        
-@bot.command()
-async def upload(ctx, attachment: discord.Attachment):
-    await ctx.send(f'<{attachment.url}>') 
-    
-    
+     
+      
 @bot.command(name = "gif",description="Converts provided Video (.MP4) to GIF format")
 @commands.cooldown(1,15,commands.BucketType.user)
-async def convert(ctx,attachment:discord.Attachment):
-    name = attachment.filename
-    await attachment.save(fp = fr"C:\Users\callm\Desktop\Python Files\{name}")       # type: ignore
-    IntName = Converter.convert(name)
-    await ctx.channel.send(file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{IntName}.gif"))
-    os.remove(f"{IntName}.gif")
-    os.remove(f'{name}')
-    print('done')
-
+async def convert(ctx):
+    if len(ctx.message.attachments) != 0:
+        attachment = ctx.message.attachments[0]
+        name = attachment.filename
+        await attachment.save(fp = fr"C:\Users\callm\Desktop\Python Files\{name}")       # type: ignore
+        IntName = Converter.convert(name)
+        await ctx.channel.send(file = discord.File(fp = fr"{IntName}.gif"))
+        os.remove(f"{IntName}.gif")
+        os.remove(f'{name}')
+        return
+    elif "https://" in ctx.message.content:
+        url = ctx.message.content[5:]
+          
+        filename = urlDownloader(url,'mp4')
+        IntName = Converter.convert(filename)
+        await ctx.channel.send(file = discord.File(fp = fr"{IntName}.gif"))
+        os.remove(filename)
+        os.remove(f"{IntName}.gif")
+        return
+    
 @convert.error
 async def convert_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
@@ -666,41 +649,7 @@ async def meaning_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
-    
-@bot.command(name = "py",description = 'Code python. \n No Inputs or Exception Cases displayed \n SIDE NOTE: you can also print your code using the command `?gpt`')
-async def coder(ctx,*,msg):
-    if ctx.author.id == 710758283408834612:
-        bol,result = Execution.exec(msg)      # Command closed for security purposes
-        
-        if bol:
-            await ctx.channel.send(result)
-        else:
-            await ctx.channel.send('error')
-    else:
-        ctx.reply("Permission denied")
-        
-@bot.command(name = "rd",description = "Downloads Reddit media")
-@commands.cooldown(1,15,commands.BucketType.user)
-async def download(ctx,url):
-    Name = str(r.randint(0,1000))
-    try:
-        R = Downloader(filename = f"{Name}",max_q = True)
-        R.url = url
-        R.download()
-    except:
-        RedDownloader.Download(url,output = Name,quality=720)
-    await ctx.message.delete()
-    for i in ["mp4","gif","png","jpg","jpeg","m4a","mov"]:
-        try:
-            file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.{i}")
-            await ctx.channel.send(file = file)
-            os.remove(f"{Name}.{i}")
-            return
-        except:
-            continue
 
-@download.error
-async def dnwld_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
@@ -731,9 +680,237 @@ async def bard_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
+      
         
+@bot.command(name = "rz",description = "Reduces Images and GIF's dimensions. \n \nTo maintain aspect ratio, image/gif size will NOT be exactly as the input. To stop this, write 'false' after all the arguments   \nDefault size is 200 x 200.")
+@commands.cooldown(1,10,commands.BucketType.user)
+async def resizer(ctx,url,width = 200,height = 200,aspectRatio = " "):    
+    if ".png" in url or ".jpg" in url or ".jpeg" in url or "webp" in url:
+        name = downloaderAndResizer(url,(int(width),int(height)),aspectRatio)
+        await ctx.reply(file=discord.File(fp=name))    
+        os.remove(name)
+    elif ".gif" in url:
+        name = gifDownloaderAndResizer(url,(int(width),int(height)),aspectRatio)
+        await ctx.reply(file=discord.File(fp=name))    
+        os.remove(name)
+    return 
 
+@resizer.error
+async def resizer_error(ctx,error):
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
 
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)    
     
+@bot.command(name = "dl", description= "\nDownloads __Youtube__, __Twiter__ and __Reddit__ files")
+@commands.cooldown(1,10,commands.BucketType.user)
+async def Downloader(ctx,link):
+    
+    if "https://www.youtube.com/watch?v=" in link:
+        try:
+            name = downloadMedia(link,"youtube")
+            await ctx.reply(file=discord.File(fp = f"{name}"))
+            os.remove(path=f'{name}')
+        except:
+            await ctx.reply("Error! :octagonal_sign:")
+        return
+    elif "https://www.reddit.com/r" in link:
+            Name = downloadMedia(link,"reddit")
+            for i in ["mp4","gif","png","jpg","jpeg","m4a","mov"]:
+                try:
+                    file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.{i}")
+                    await ctx.channel.send(file = file)
+                    os.remove(f"{Name}.{i}")
+                    return
+                except:
+                    continue
+    
+    elif ("https://twitter.com/" in link) or ("https://x.com/" in link) :
+        filename = downloadMedia(link,"twitter")
+        await ctx.reply(file=discord.File(fp=filename))
+        os.remove(filename)
+        return
+            
+@Downloader.error
+async def dl_error(ctx,error):                                          #NOTE add reverser and remover and extracter
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)
+
+
+@bot.command(name="addaud",description = "Adds audio to video (removes video's audio) \nSend files in any order and add up audio")
+@commands.cooldown(1,10,commands.BucketType.user)
+async def add_audio(ctx):
+    messages = ctx.channel.history(limit=10)
+    vid = []
+    aud = []
+   
+    async for i in messages:
+        if len(aud) < 1 or len(vid) < 1:
+            if len(i.attachments) > 0:
+                attList = i.attachments
+                for a in attList:
+                    attType = a.content_type
+                    print(attType)
+                    if "video" in attType:
+                        if len(vid) > 0:
+                            continue
+                        else:
+                            filename =str(r.randint(0,9999))# + '.' + attType[attType.find('/')+1:]
+                            await a.save(fp=fr'c:\Users\callm\Desktop\Python Files\{filename}.mp4')
+                            vid.append(filename)
+                    elif "audio" in attType:
+                        if len(aud) > 0:
+                            continue
+                        else:
+                            filename =str(r.randint(0,9999)) 
+                            await a.save(fp=fr'c:\Users\callm\Desktop\Python Files\{filename}.mp3')
+                            aud.append(filename)
+                            
+                            
+            elif i.content != 0:                                          
+                for l in i.content.split(): 
+                    if "https://cdn.discordapp.com/attachments/" in l:
+                        temp = ''
+                        link,ext = '',' '
+                        flag = False    
+                        contentList = list(l)
+                        delCounter = 0
+                        tempInd = 0
+                        
+                        hIndex = contentList.index('h')
+                        for counter in range(0,contentList.count('h')):
+                            for ind in range(5):
+                                temp += contentList[ind + hIndex]
+                            if temp == "https":
+                                flag = True                                                   
+                                break
+                            else:
+                                contentList.pop(hIndex)
+                                hIndex = contentList.index('h')
+                                temp = ""
+                        
+                        if flag == True:          
+                            if '&' in contentList:                                                                        
+                                andIndex = contentList[::-1].index('&')
+                                for ind in range(0,len(contentList[hIndex:len(contentList)-andIndex])):
+                                    link += contentList[hIndex + ind]
+                                print(link + '\n')
+                            else:
+                                for aa in ['.mp4','.webm','.m4a','.mov','.mp3','.wav','.ogg']:
+                                    if aa in l:
+                                        tempInd = len(l) - l[::-1].find(aa)
+                                        break
+                                link = l[hIndex:tempInd]
+                                print(link + '\n')
+                            
+                            for aa in ['mp4','webm','m4a','mov','mp3','wav','ogg']:
+                                    if aa in l:
+                                        ext == aa
+                                        print(ext)
+                            if (ext.lower() in 'mp3oggwavm4a') and (len(aud) < 1):
+                                print("hi")
+                                filename = urlDownloader(link,ext)
+                                aud.append(filename[:filename.find('.')])
+                            else:
+                                delCounter += 1
+                            if ext.lower() in 'mp4movwebm' and (len(vid) < 1):
+                                filename = urlDownloader(link,ext)
+                                vid.append(filename[:filename.find('.')])
+                            else:
+                                delCounter += 1
+                            if delCounter == 2:
+                                continue
+                    else:
+                        pass
+    
+    if len(vid) == 0 and len(aud) == 0:
+        await ctx.reply(":octagonal_sign: File error :octagonal_sign:")
+    else:
+        output = r.randint(0,9999)
+        run(f'ffmpeg -i {vid[0]}.mp4 -i {aud[0]}.mp3 -map 0:v -map 1:a -c:v copy {output}.mp4')
+        os.remove(vid[0]+'.mp4')
+        os.remove(aud[0]+'.mp3')
+        await ctx.reply(file = discord.File(fp=f'{output}.mp4'))
+        os.remove(f'{output}.mp4')
+        
+@add_audio.error
+async def audioadd_error(ctx,error):                                         
+    if isinstance(error,commands.CommandOnCooldown):
+        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
+        await ctx.reply(embed=embed)          
+          
+                
+@bot.command(name="rev",description = "Reverses media files.")
+@commands.cooldown(1,10,commands.BucketType.user)
+async def reverse_media(ctx):
+    messages = ctx.channel.history(limit=10)
+    
+    async for i in messages:
+        if len(i.attachments) > 0:
+            filename = str(r.randint(0,9999))
+            attType = i.attachments[0].content_type
+            if "video" in attType:
+                await i.attachments[0].save(fp=fr'C:\Users\callm\Desktop\Python Files\{filename}.mp4')
+                run(f"ffmpeg -i {filename}.mp4 -vf reverse -af areverse {filename*2}.mp4")
+                await ctx.reply(file=discord.File(fp=f"{filename*2}.mp4"))
+                os.remove(f"{filename}.mp4")
+                os.remove(f"{filename*2}.mp4")
+            if "audio" in attType:
+                await i.attachments[0].save(fp=fr'C:\Users\callm\Desktop\Python Files\{filename}.mp3')
+                run(f"ffmpeg -i {filename}.mp3 -af areverse {filename*2}.mp3")
+                await ctx.reply(file=discord.File(fp=f"{filename*2}.mp3"))
+                os.remove(f"{filename}.mp3")
+                os.remove(f"{filename*2}.mp3")
+            return
+        
+        elif i.content != 0:
+            for l in i.content.split(): 
+                    if "https://cdn.discordapp.com/attachments/" in l:
+                        temp = ''
+                        link,ext = '',' '
+                        flag = False    
+                        contentList = list(l)
+                        hIndex = contentList.index('h')
+                        for counter in range(0,contentList.count('h')):
+                            for ind in range(5):
+                                temp += contentList[ind + hIndex]
+                            if temp == "https":
+                                flag = True                                                   
+                                break
+                            else:
+                                contentList.pop(hIndex)
+                                hIndex = contentList.index('h')
+                                temp = ""
+                        if flag == True:                                                                                         
+                            andIndex = contentList[::-1].index('&')
+                            for ind in range(0,len(contentList[hIndex:len(contentList)-andIndex])):
+                                link += contentList[hIndex + ind]
+                            indx = link.find("?ex=")
+                            for kji in range(1,5):
+                                if link[indx-kji] == ".": break
+                                ext += link[indx-kji]
+                            ext = ext[::-1].strip()
+                            filename = urlDownloader(link,ext)
+                            
+                            if ext.lower() in 'mp3oggwavm4a':
+                                filename = urlDownloader(link,ext)
+                                run(f"ffmpeg -i {filename} -af areverse {filename[:4]}.mp3")
+                                os.remove(f"{filename}")
+                                os.remove(f"{filename[:4]}.mp3")
+                            elif ext.lower() in 'mp4movwebm':
+                                filename = urlDownloader(link,ext)
+                                run(f"ffmpeg -i {filename} -vf reverse -af areverse {filename[:4]}.mp4")
+                                os.remove(f"{filename}")
+                                os.remove(f"{filename[:4]}.mp4")          
+                            await ctx.reply(file = discord.File(fp=f'{filename[:4]}.mp4'))
+                            return
+        
+    
+    
+
 #ir3Hhsla6EWPD_vvpD_bmSNsr7W1f_bu             CLIENT SECRET                
 bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.G-alAu.Vf8BcYsUYJ4fTKfKATvgP7IHm42hLikk6j5LIg')
