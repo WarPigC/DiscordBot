@@ -68,8 +68,8 @@ async def EpicCommand(ctx):
 async def song(ctx,link):                                                                
     try:
         name = downloadMedia(link,"ytSong")
-        await ctx.reply(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}.m4a"))
-        os.remove(path=f'{name}.m4a')
+        await ctx.reply(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}.mp3"))
+        os.remove(path=f'{name}.mp3')
     except:
         await ctx.reply("Error :octagonal_sign:")
 
