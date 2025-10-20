@@ -13,6 +13,7 @@ from encrypter import func
 from ImgResizer import downloaderAndResizer
 from gifResizer import gifDownloaderAndResizer
 from CommonMediaDownloader import downloadMedia,urlDownloader
+from bot_token import * 
 
 description = '''Pretty epic bot.
 There are a number of utility commands being showcased here. \n
@@ -24,7 +25,7 @@ intents.message_content = True
 
 
 help_command = commands.DefaultHelpCommand(no_category = "Commands"
-                    ,default_argument_description = " ->  <INPUT>",sorted=True,dm_help=True)
+                    ,default_argument_description = " ->  <INPUT>",sorted=True)
 bot = commands.Bot(command_prefix='?', description=description
                    , intents=intents,help_command=help_command)
 
@@ -39,7 +40,7 @@ async def on_ready():
 async def slash(ctx):                                    
    await ctx.send("You executed the slash command!")
    
-@bot.command(name="KillSwitch")
+@bot.command(name="kys")
 async def stop(ctx):
     if ctx.author.id == 710758283408834612:
         await ctx.channel.send('Closing')
@@ -327,7 +328,7 @@ async def rps(ctx, user : discord.User=None):   # type: ignore
             await ctx.channel.send(embed = embed4)
     
     s.Discon()
-    
+
 @rps.error
 async def rps_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
@@ -489,7 +490,7 @@ async def lb_error(ctx,error):
         await ctx.reply(embed=embed)
      
       
-@bot.command(name = "gif",description="Converts provided Video (.MP4) to GIF format")
+@bot.command(name = "gif",description="Converts provided Video (.MP4) to .GIF format")
 @commands.cooldown(1,15,commands.BucketType.user)
 async def convert(ctx):
     if len(ctx.message.attachments) != 0:
@@ -654,9 +655,9 @@ async def meaning_error(ctx,error):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)
 
-@bot.command(name = "bard",description = "Talk with Google Bard! \nIt is powered by the Gemini Pro engine. \n \n***Note:*** It takes ONE time questions only ")
+@bot.command(name = "gemini",description = "Talk with Google Gemini! \n \n***Note:*** It takes ONE time questions only ")
 @commands.cooldown(1,10,commands.BucketType.user)
-async def bard(ctx,*,text):
+async def gemini(ctx,*,text):                                   # BUG: install grpcio for it to work / upgrade pip
     try:
         async def responseGenerator(text):
             import google.generativeai as g
@@ -668,14 +669,14 @@ async def bard(ctx,*,text):
         embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1184880122822672466/gemini-chatgpt-112814653-16x9_0.png") 
         await ctx.reply(embed=embed)
         
-    except:
-        embed = discord.Embed(title = "Error!",description="*Sorry for the error from the bot's end*",colour = 0xff0000)
+    except Exception as e:
+        embed = discord.Embed(title = "Error!",description=f"*Sorry for the error from the bot's end*\n{e}",colour = 0xff0000)
         embed.set_thumbnail(url="https://media.discordapp.net/attachments/886281693156233277/1184880122822672466/gemini-chatgpt-112814653-16x9_0.png")
         await ctx.reply(embed = embed)             
 
         
-@bard.error
-async def bard_error(ctx,error):
+@gemini.error
+async def gemini_error(ctx,error):
     
     if isinstance(error,commands.CommandOnCooldown):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
@@ -686,7 +687,8 @@ async def bard_error(ctx,error):
 @commands.cooldown(1,10,commands.BucketType.user)
 async def resizer(ctx,url,width = 200,height = 200,aspectRatio = " "):    
     if ".png" in url or ".jpg" in url or ".jpeg" in url or "webp" in url:
-        name = downloaderAndResizer(url,(int(width),int(height)),aspectRatio)
+        ext = url[url.rfind('.'):]
+        name = downloaderAndResizer(url, ext, (int(width),int(height)),aspectRatio)         # BUG: FIX   do check what bug first
         await ctx.reply(file=discord.File(fp=name))    
         os.remove(name)
     elif ".gif" in url:
@@ -710,25 +712,55 @@ async def resizer_error(ctx,error):
 async def Downloader(ctx,link):
     
     if "https://www.youtube.com/watch?v=" in link:
-        try:
-            name = downloadMedia(link,"youtube")
-            await ctx.reply(file=discord.File(fp = f"{name}"))
-            os.remove(path=f'{name}')
-        except:
-            await ctx.reply("Error! :octagonal_sign:")
+        name = downloadMedia(link,"youtube")
+        await ctx.reply(file=discord.File(fp = f"{name}"))                      
+        os.remove(f"{name}")
         return
-    elif "https://www.reddit.com/r" in link:
-            Name = downloadMedia(link,"reddit")
-            for i in ["mp4","gif","png","jpg","jpeg","m4a","mov"]:
-                try:
-                    file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{Name}.{i}")
-                    await ctx.channel.send(file = file)
-                    os.remove(f"{Name}.{i}")
-                    return
-                except:
-                    continue
+    if ("https://" in link) and ("youtu.be" in link):
+        name = downloadMedia(link,"youtube")
+        if name != "fail":
+            await ctx.reply(file=discord.File(fp = f"{name}.mp4"))                      
+            os.remove(f"{name}.mp4")
+        else:
+            await ctx.reply(":octagonal_sign: Error! :octagonal_sign:")
+    elif ("https://reddit.com/r" in link) or ("https://new.reddit.com/r/" in link):
+        Name = downloadMedia(link,"reddit")
+        File = ""
+        for i in os.walk(os.getcwd()):
+            for j in i:
+                for k in j:
+                    if Name in k:
+                        File = k
+                        print(File)
+                        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{File}")
+                        await ctx.channel.send(file=file)
+        os.remove(path= os.getcwd()+"\\"+File)
+        return
+    elif ("https://rxddit.com/r" in link):
+        
+        link.replace('x','e',1)
+        Name = downloadMedia(link,"reddit")
+        File = ""
+        for i in os.walk(os.getcwd()):
+            for j in i:
+                for k in j:
+                    if Name in k:
+                        File = k
+                        print(File)
+                        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{File}")
+                        await ctx.channel.send(file=file)
+        os.remove(path= os.getcwd()+"\\"+File)
+        return
     
-    elif ("https://twitter.com/" in link) or ("https://x.com/" in link) :
+    elif ("https://twitter.com/" in link) or ("https://x.com/" in link):
+        filename = downloadMedia(link,"twitter")
+        await ctx.reply(file=discord.File(fp=filename))
+        os.remove(filename)
+        return
+    
+    elif ("https://fxtwitter" in link) or ("https://vxtwitter" in link):
+        link = link[:8] + link[10:]
+        print(link)
         filename = downloadMedia(link,"twitter")
         await ctx.reply(file=discord.File(fp=filename))
         os.remove(filename)
@@ -743,7 +775,7 @@ async def dl_error(ctx,error):                                          #NOTE ad
 
 @bot.command(name="addaud",description = "Adds audio to video (removes video's audio) \nSend files in any order and add up audio")
 @commands.cooldown(1,10,commands.BucketType.user)
-async def add_audio(ctx):
+async def add_audio(ctx,mixAud = "f"):
     messages = ctx.channel.history(limit=10)
     vid = []
     aud = []
@@ -795,12 +827,15 @@ async def add_audio(ctx):
                     else:
                         pass
     
-    if len(vid) == 0 and len(aud) == 0:
+    if len(vid) == 0 and len(aud) == 0: 
         await ctx.reply(":octagonal_sign: File error :octagonal_sign:")
         
     else:
         output = r.randint(0,9999)
-        run(f'ffmpeg -i {vid[0]}.mp4 -i {aud[0]}.mp3 -map 0:v -map 1:a -c:v copy {output}.mp4')
+        if mixAud == "t":          #mixes audio
+            run(f'ffmpeg -i {vid[0]}.mp4 -i {aud[0]}.mp3 -filter_complex "[0:a][1:a]amerge=inputs=2[a]" -map 0:v -map "[a]" -c:v copy -ac 2 -shortest {output}.mp4') 
+        else:
+            run(f'ffmpeg -i {vid[0]}.mp4 -i {aud[0]}.mp3 -map 0:v -map 1:a -c:v copy -shortest {output}.mp4')
         os.remove(vid[0]+'.mp4')
         os.remove(aud[0]+'.mp3')
         await ctx.reply(file = discord.File(fp=f'{output}.mp4'))
@@ -866,7 +901,5 @@ async def reverse_error(ctx,error):
     if isinstance(error,commands.CommandOnCooldown):
         embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
         await ctx.reply(embed=embed)     
-    
 
-#ir3Hhsla6EWPD_vvpD_bmSNsr7W1f_bu             CLIENT SECRET                
-bot.run('MTAzMzk3OTUxMTg3Mzc0NDkxNg.G-alAu.Vf8BcYsUYJ4fTKfKATvgP7IHm42hLikk6j5LIg')
+bot.run(getToken())
