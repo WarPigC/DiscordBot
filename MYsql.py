@@ -1,5 +1,7 @@
 import mysql.connector
-con = mysql.connector.connect(host = "localhost",user = "root",passwd = "Aniruddh#123",database = "db1")
+from secrets.py import *
+
+con = mysql.connector.connect(host = "localhost",user = "root",passwd = getPwd(),database = "db1")
 class sql:
     def __init__(self) -> None:
         global con
@@ -76,4 +78,5 @@ class sql:
         a = self.con.fetchall()
         return a
     
+
 
