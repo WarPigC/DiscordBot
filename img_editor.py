@@ -9,12 +9,13 @@ def edit(file,input,xo_file,R):
     f = Image.open(file)  #opens 71 file
     for z in D:
         if input == z:
-            if xo_file == r"C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\cross.png":
+            if xo_file == r"cross.png":
                 o = Image.open(xo_file)   #cross png
                 f.paste(o,D[z])
                 f.save(f'{R}.png')
-            elif xo_file == r"C:\Users\callm\Dropbox\My PC (AniruddhPC1001)\Desktop\Python Files\circle.png":
+            elif xo_file == r"circle.png":
                 o = Image.open(xo_file)  #circle png
                 f.paste(o,D[z])  
                 f.save(f'{R}.png')
             
+
