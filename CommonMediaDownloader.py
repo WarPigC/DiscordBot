@@ -6,8 +6,6 @@ import RedDownloader
 from redvid import Downloader
 from requests import get
 
-path = r"C:\Users\callm\Desktop\Python Files\\"
-
 def urlDownloader(url:str,ext:str = ""):
     fileSource = get(url=url,stream=True)
     if len(ext) > 0:
