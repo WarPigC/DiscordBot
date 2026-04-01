@@ -34,7 +34,6 @@ bot = commands.Bot(command_prefix='?', description=description
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="?help"))
     await bot.tree.sync()
-    os.chdir(path = r"C:\Users\callm\Desktop\Python Files")
 
 @bot.hybrid_command(name="slash")
 async def slash(ctx):                                    
@@ -69,7 +68,7 @@ async def EpicCommand(ctx):
 async def song(ctx,link):                                                                
     try:
         name = downloadMedia(link,"ytSong")
-        await ctx.reply(file=discord.File(fp = rf"C:\Users\callm\Desktop\Python Files\{name}.mp3"))
+        await ctx.reply(file=discord.File(fp = rf".\{name}.mp3"))
         os.remove(path=f'{name}.mp3')
     except:
         await ctx.reply("Error :octagonal_sign:")
@@ -127,32 +126,6 @@ async def flip(ctx):
     await msg.edit(embed=embed2)
     
     s.Discon()
-    
-@bot.command(description = "Use Magik ball to answer your question")
-@commands.cooldown(1,3,commands.BucketType.user)
-async def magikball(ctx):
-    
-    start = ['Yes','No','I dont know',"I'm ignoring that",'You know the answer',
-             'Wha..?','How do you even come up with this?','Go touch grass','haha no','Pardon me?','']
-    mid = [' i think its better that way?...',' hehe',' think about it',
-           ' think about your life',' maybe no actually'," i'm cringing af",' i cant care less',' actually ask your friend ',
-           ' not my problem',' million dollar question',' you can become gay though',' definetly not lying','','','','','','']
-    end = [' 👍',' 😃',' ✔️',' ❓','','','','',]
-     
-    if len(ctx.message.content) <= 15:
-        await ctx.channel.send("Cringe.")
-    elif 'fuck' in ctx.message.content.lower():
-        await ctx.channel.send('NO WAY!!!1!!1!!111!111 \nYou dropped an F-BOMB?')
-    else:
-        z = r.choice(start) + r.choice(mid) + r.choice(end)
-        await ctx.channel.send(z)
-
-@magikball.error
-async def magikball_error(ctx,error):
-    if isinstance(error,commands.CommandOnCooldown):
-        embed = discord.Embed(title = "Error!",description=error,colour = 0xff0000)
-        await ctx.reply(embed=embed)
-
 
 @bot.command(description = "Guess the number fom 1 to 20")
 @commands.cooldown(1,15,commands.BucketType.user)
@@ -359,32 +332,32 @@ async def tictactoe(ctx,user : discord.User):
     img = Image.open("base.png")
     img1 = img.copy()
     R = str(r.randrange(1,100))
-    img1.save(fr'C:\Users\callm\Desktop\Python Files\{R}.png')
+    img1.save(fr'.\{R}.png')
     
     turn_count = 0 # max 9
     TrackerList = []
     ValidInp = ["a1","a2","a3","b1","b2","b3","c1","c2","c3"]
     
-    dict = {"user1":{"user":ctx.author,"symbol-image":r"C:\Users\callm\Desktop\Python Files\circle.png","UserTrack":[]},
-            "user2":{"user":user,"symbol-image":r"C:\Users\callm\Desktop\Python Files\cross.png","UserTrack":[]}}
+    dict = {"user1":{"user":ctx.author,"symbol-image":r".\circle.png","UserTrack":[]},
+            "user2":{"user":user,"symbol-image":r".\cross.png","UserTrack":[]}}
     
     while True:
         for USER in dict:
             if turn_count >= 9:
-                await ctx.channel.send(f"**Its a tie between {user.mention} and {ctx.author.mention}!!**",file = discord.File(fr'C:\Users\callm\Desktop\Python Files\{R}.png'))
-                os.remove(fr'C:\Users\callm\Desktop\Python Files\{R}.png')
+                await ctx.channel.send(f"**Its a tie between {user.mention} and {ctx.author.mention}!!**",file = discord.File(fr'.\{R}.png'))
+                os.remove(fr'.\{R}.png')
                 return
             
-            g = await ctx.channel.send(f"{dict[USER]['user'].mention}'s turn.",file = discord.File(fr'C:\Users\callm\Desktop\Python Files\{R}.png'))
+            g = await ctx.channel.send(f"{dict[USER]['user'].mention}'s turn.",file = discord.File(fr'.\{R}.png'))
             msg = await bot.wait_for('message',check = check,timeout = 60)
             
             if 'stop' == msg.content.lower():
                 await ctx.channel.send("🛑 Stopped game 🛑")
-                os.remove(fr'C:\Users\callm\Desktop\Python Files\{R}.png')
+                os.remove(fr'.\{R}.png')
                 return
             
             elif msg.content in ValidInp and msg.content not in dict[USER]["UserTrack"]:
-                edit(fr'C:\Users\callm\Desktop\Python Files\{R}.png',msg.content,dict[USER]["symbol-image"],R)
+                edit(fr'\{R}.png',msg.content,dict[USER]["symbol-image"],R)
                 dict[USER]["UserTrack"].append(msg.content)
                 TrackerList.append(msg.content)
                 turn_count += 1
@@ -393,8 +366,8 @@ async def tictactoe(ctx,user : discord.User):
                 
             
             if Checkwinlist(dict[USER]["UserTrack"]):
-                await ctx.channel.send(f"{dict[USER]['user'].mention} is the winner!",file = discord.File(fr'C:\Users\callm\Desktop\Python Files\{R}.png'))
-                os.remove(fr"C:\Users\callm\Desktop\Python Files\{R}.png")
+                await ctx.channel.send(f"{dict[USER]['user'].mention} is the winner!",file = discord.File(fr'.\{R}.png'))
+                os.remove(fr".\{R}.png")
                 await g.delete()
                 await msg.delete()
                 return
@@ -496,7 +469,7 @@ async def convert(ctx):
     if len(ctx.message.attachments) != 0:
         attachment = ctx.message.attachments[0]
         name = attachment.filename
-        await attachment.save(fp = fr"C:\Users\callm\Desktop\Python Files\{name}")       # type: ignore
+        await attachment.save(fp = fr".\{name}")       # type: ignore
         IntName = Converter.convert(name)
         await ctx.channel.send(file = discord.File(fp = fr"{IntName}.gif"))
         os.remove(f"{IntName}.gif")
@@ -732,7 +705,7 @@ async def Downloader(ctx,link):
                     if Name in k:
                         File = k
                         print(File)
-                        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{File}")
+                        file = discord.File(fp = fr".\{File}")
                         await ctx.channel.send(file=file)
         os.remove(path= os.getcwd()+"\\"+File)
         return
@@ -747,7 +720,7 @@ async def Downloader(ctx,link):
                     if Name in k:
                         File = k
                         print(File)
-                        file = discord.File(fp = fr"C:\Users\callm\Desktop\Python Files\{File}")
+                        file = discord.File(fp = fr".\{File}")
                         await ctx.channel.send(file=file)
         os.remove(path= os.getcwd()+"\\"+File)
         return
@@ -792,14 +765,14 @@ async def add_audio(ctx,mixAud = "f"):
                             continue
                         else:
                             filename =str(r.randint(0,9999))# + '.' + attType[attType.find('/')+1:]
-                            await a.save(fp=fr'c:\Users\callm\Desktop\Python Files\{filename}.mp4')
+                            await a.save(fp=fr'.\{filename}.mp4')
                             vid.append(filename)
                     elif "audio" in attType:
                         if len(aud) > 0:
                             continue
                         else:
                             filename =str(r.randint(0,9999)) 
-                            await a.save(fp=fr'c:\Users\callm\Desktop\Python Files\{filename}.mp3')
+                            await a.save(fp=fr'.\{filename}.mp3')
                             aud.append(filename)
                             
                             
@@ -858,13 +831,13 @@ async def reverse_media(ctx):
             filename = str(r.randint(0,9999))
             attType = i.attachments[0].content_type
             if "video" in attType:
-                await i.attachments[0].save(fp=fr'C:\Users\callm\Desktop\Python Files\{filename}.mp4')
+                await i.attachments[0].save(fp=fr'.\{filename}.mp4')
                 run(f"ffmpeg -i {filename}.mp4 -vf reverse -af areverse {filename*2}.mp4")
                 await ctx.reply(file=discord.File(fp=f"{filename*2}.mp4"))
                 os.remove(f"{filename}.mp4")
                 os.remove(f"{filename*2}.mp4")
             if "audio" in attType:
-                await i.attachments[0].save(fp=fr'C:\Users\callm\Desktop\Python Files\{filename}.mp3')
+                await i.attachments[0].save(fp=fr'.\{filename}.mp3')
                 run(f"ffmpeg -i {filename}.mp3 -af areverse {filename*2}.mp3")
                 await ctx.reply(file=discord.File(fp=f"{filename*2}.mp3"))
                 os.remove(f"{filename}.mp3")
