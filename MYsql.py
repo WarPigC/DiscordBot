@@ -7,11 +7,6 @@ class sql:
         global con
         self.con = con.cursor()
         
-    def viewjojo(self):
-        self.con.execute("SELECT * FROM JoJo")
-        data = self.con.fetchall()
-        for i in data:
-            print(i)
             
     def add(self,guild,id,amount):
         l = guild.split()
